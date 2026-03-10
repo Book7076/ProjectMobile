@@ -1,108 +1,156 @@
 package com.example.project
 
 import android.content.Context
-import android.widget.Toast
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LocalFlorist
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.QuestionAnswer
-import androidx.compose.material.icons.filled.ShoppingBasket
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
 
 @Composable
 fun CustomerMainScreen(navController: NavHostController, viewModel: ProjectViewModel) {
     val context = LocalContext.current
-    // สร้าง State สำหรับเก็บว่าตอนนี้อยู่ที่เมนูไหน
+    val sharedPref = remember { SharedPreferencesManager(context) }
     var selectedItem by remember { mutableIntStateOf(0) }
+    val userName = sharedPref.getSavedName()
+    val mainColor = Color(0xFFD2B49C)
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchAllFlowers()
+    }
 
     Scaffold(
         topBar = {
-            // เพิ่มการกด Profile เพื่อ Logout หรือไปหน้าอื่น
             CustomerTopBar(
                 contextForToast = context,
-                onProfileClick = {
-                    navController.navigate(Screen.Login.route) {
-                        popUpTo(0)
-                    }
-                }
+                onProfileClick = { navController.navigate(Screen.Profile.route) },
+                onCartClick = { navController.navigate(Screen.Checkout.route) }
             )
         },
         bottomBar = {
-            // ส่งค่าเข้าไปจัดการ Bottom Bar
             CustomerBottomBar(
                 selectedIndex = selectedItem,
                 onItemSelected = { selectedItem = it }
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize()
-        ) {
-            // แสดงเนื้อหาตามปุ่มที่กด (ตัวอย่างการใช้งาน viewModel)
+        Box(modifier = Modifier.padding(innerPadding).fillMaxSize()) {
             when (selectedItem) {
-                0 -> Text(text = "ยินดีต้อนรับสู่หน้าหลัก", modifier = Modifier.padding(16.dp))
-                1 -> Text(text = "รายการดอกไม้ตามฤดูกาล", modifier = Modifier.padding(16.dp))
-                2 -> Text(text = "คำแนะนำช่อดอกไม้พิเศษ", modifier = Modifier.padding(16.dp))
-            }
+                0 -> {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "ยินดีต้อนรับคุณ: ${if (userName.isNotEmpty()) userName else "Customer"}",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF5C6BC0)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = "ยินดีต้อนรับสู่ร้าน Flower Daily ของเรา", color = Color.Gray)
+                    }
+                }
 
-            // แสดงชื่อผู้ใช้จาก viewModel (เพื่อให้ viewModel ถูกใช้งาน)
-            val userEmail = viewModel.loginResult?.email ?: "Customer"
-            Text(text = "ผู้ใช้งาน: $userEmail", modifier = Modifier.padding(16.dp), color = Color.Gray)
+                1 -> {
+                    // --- หน้าเลือกพันธุ์ดอกไม้ (ปรับเป็น Grid 2 คอลัมน์ตามรูป) ---
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "แคตตาล็อกดอกไม้",
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                            color = Color(0xFF5D4037)
+                        )
+
+                        val flowerCategories = viewModel.flowerList.distinctBy { it.flower_name }
+
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            contentPadding = PaddingValues(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            items(flowerCategories) { flower ->
+                                Card(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(200.dp)
+                                        .clickable {
+                                            // ✅ แก้ไข: คลิกแล้วไปหน้า "ความหมาย" (รูปที่ 2 ใน Flow)
+                                            navController.navigate("flower_meaning/${flower.flower_name}")
+                                        },
+                                    shape = RoundedCornerShape(12.dp),
+                                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                                    elevation = CardDefaults.cardElevation(4.dp)
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        modifier = Modifier.padding(8.dp)
+                                    ) {
+                                        Image(
+                                            painter = rememberAsyncImagePainter(flower.flower_image),
+                                            contentDescription = null,
+                                            modifier = Modifier
+                                                .size(120.dp)
+                                                .clip(RoundedCornerShape(8.dp)),
+                                            contentScale = ContentScale.Crop
+                                        )
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text(
+                                            text = "ดอก${flower.flower_name}",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                2 -> {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "คำแนะนำ", fontWeight = FontWeight.Bold, fontSize = 20.sp)
+                        Text(text = "เลือกดอกไม้ให้ถูกใจผู้รับด้วยคำแนะนำของเรา", color = Color.Gray)
+                    }
+                }
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomerTopBar(contextForToast: Context, onProfileClick: () -> Unit) {
+fun CustomerTopBar(contextForToast: Context, onProfileClick: () -> Unit, onCartClick: () -> Unit) {
     TopAppBar(
-        title = {
-            Text(
-                text = "Flower Daily",
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                fontSize = 20.sp
-            )
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color(0xFFD2B49C) // เปลี่ยนเป็น FF เพื่อให้เห็นสี
-        ),
+        title = { Text("Flower Daily", fontWeight = FontWeight.Bold, color = Color.White) },
+        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color(0xFFD2B49C)),
         actions = {
-            IconButton(onClick = {
-                Toast.makeText(contextForToast, "ตะกร้าสินค้าของคุณ", Toast.LENGTH_SHORT).show()
-            }) {
-                Icon(imageVector = Icons.Default.ShoppingBasket, contentDescription = null, tint = Color.White)
+            IconButton(onClick = onCartClick) {
+                Icon(Icons.Default.ShoppingBasket, contentDescription = null, tint = Color.White)
             }
             IconButton(onClick = onProfileClick) {
-                Icon(imageVector = Icons.Default.Person, contentDescription = null, tint = Color.White)
+                Icon(Icons.Default.Person, contentDescription = null, tint = Color.White)
             }
         }
     )
@@ -111,16 +159,9 @@ fun CustomerTopBar(contextForToast: Context, onProfileClick: () -> Unit) {
 @Composable
 fun CustomerBottomBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
     val items = listOf("หน้าหลัก", "ดอกไม้", "แนะนำ")
-    val icons = listOf(
-        Icons.Default.Home,
-        Icons.Filled.LocalFlorist,
-        Icons.Filled.QuestionAnswer
-    )
+    val icons = listOf(Icons.Default.Home, Icons.Filled.LocalFlorist, Icons.Filled.QuestionAnswer)
 
-    NavigationBar(
-        containerColor = Color.White,
-        contentColor = Color(0xFFD2B49C)
-    ) {
+    NavigationBar(containerColor = Color.White) {
         items.forEachIndexed { index, item ->
             NavigationBarItem(
                 icon = { Icon(icons[index], contentDescription = item) },
@@ -129,10 +170,8 @@ fun CustomerBottomBar(selectedIndex: Int, onItemSelected: (Int) -> Unit) {
                 onClick = { onItemSelected(index) },
                 colors = NavigationBarItemDefaults.colors(
                     selectedIconColor = Color.White,
-                    selectedTextColor = Color(0xFFD2B49C),
                     indicatorColor = Color(0xFFD2B49C),
-                    unselectedIconColor = Color.Gray,
-                    unselectedTextColor = Color.Gray
+                    selectedTextColor = Color(0xFFD2B49C)
                 )
             )
         }
