@@ -52,7 +52,6 @@ fun AddAddressScreen(navController: NavHostController, viewModel: ProjectViewMod
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-            // ปรับชื่อ parameter ให้สื่อความหมายตรงกับ Data Class
             AddressInputField(label = "ชื่อ-นามสกุล ผู้รับ", value = receiverName, onValueChange = { receiverName = it }, placeholder = "เช่น นายสมชาย ใจดี")
             AddressInputField(label = "เบอร์โทรศัพท์", value = phone, onValueChange = { phone = it }, placeholder = "08x-xxx-xxxx")
             AddressInputField(label = "บ้านเลขที่ / ตึก / ชั้น / แขวง/ตำบล, เขต/อำเภอ, จังหวัด", value = addressDetail, onValueChange = { addressDetail = it }, placeholder = "กรอกที่อยู่โดยละเอียด")

@@ -1,6 +1,5 @@
 package com.example.project
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,7 +9,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,22 +20,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
-import coil.compose.rememberAsyncImagePainter
+import coil.compose.AsyncImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerFlowerFinalScreen(navController: NavHostController, viewModel: ProjectViewModel, flowerId: Int) {
     val context = LocalContext.current
     val sharedPref = SharedPreferencesManager(context)
-    val mainColor = Color(0xFFD2B49C)
-
-    LaunchedEffect(Unit) {
-        if (viewModel.flowerList.isEmpty()) {
-            viewModel.fetchAllFlowers()
-        }
-    }
-
     val item = viewModel.flowerList.find { it.id_flower == flowerId }
+    val mainColor = Color(0xFFD2B49C)
 
     Scaffold(
         topBar = {
@@ -73,6 +64,7 @@ fun CustomerFlowerFinalScreen(navController: NavHostController, viewModel: Proje
         }
     ) { padding ->
         if (item == null) {
+            // กรณีโหลดข้อมูลไม่ทันหรือหา id ไม่เจอ
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = mainColor)
             }
@@ -84,10 +76,10 @@ fun CustomerFlowerFinalScreen(navController: NavHostController, viewModel: Proje
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ส่วนแสดงรูปภาพสินค้า
-                Image(
-                    painter = rememberAsyncImagePainter(item.flower_image),
-                    contentDescription = null,
+                // ✅ รูปภาพสินค้าแบบชัดๆ ดึงจาก Server
+                AsyncImage(
+                    model = "http://10.0.2.2:3000${item.flower_image}",
+                    contentDescription = item.flower_name,
                     modifier = Modifier
                         .size(280.dp)
                         .clip(RoundedCornerShape(16.dp))
@@ -125,6 +117,7 @@ fun CustomerFlowerFinalScreen(navController: NavHostController, viewModel: Proje
 
                 Spacer(modifier = Modifier.weight(1f))
 
+                // ✅ ปุ่มเพิ่มลงตะกร้า
                 Button(
                     onClick = {
                         viewModel.addToCart(

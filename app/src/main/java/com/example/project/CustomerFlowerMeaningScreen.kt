@@ -1,17 +1,15 @@
 package com.example.project
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material3.*
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.ShoppingBasket
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,11 +21,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,27 +44,7 @@ fun CustomerFlowerMeaningScreen(navController: NavHostController, viewModel: Pro
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = mainColor),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { navController.navigate(Screen.Checkout.route) }) {
-                        Icon(
-                            imageVector = Icons.Default.ShoppingBasket,
-                            contentDescription = "Cart",
-                            tint = Color.White
-                        )
-                    }
-                    IconButton(onClick = { navController.navigate(Screen.Profile.route) }) {
-                        Icon(
-                            imageVector = Icons.Default.Person,
-                            contentDescription = "Profile",
-                            tint = Color.White
-                        )
+                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
                     }
                 }
             )
@@ -72,9 +53,17 @@ fun CustomerFlowerMeaningScreen(navController: NavHostController, viewModel: Pro
         Column(modifier = Modifier.padding(padding).fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Text("แคตตาล็อกดอกไม้", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5D4037))
             Spacer(modifier = Modifier.height(20.dp))
-            Image(painter = rememberAsyncImagePainter(flower?.flower_image), contentDescription = null, modifier = Modifier.size(250.dp))
+
+            // ✅ ดึงรูปจาก Server
+            AsyncImage(
+                model = "http://10.0.2.2:3000${flower?.flower_image}",
+                contentDescription = null,
+                modifier = Modifier.size(250.dp).clip(RoundedCornerShape(16.dp)),
+                contentScale = ContentScale.Fit
+            )
+
             Text("ดอก$flowerName", fontSize = 22.sp, fontWeight = FontWeight.Bold)
-            Text(text = "ความหมายโดยรวมของดอกไม้พันธุ์นี้...", modifier = Modifier.padding(16.dp))
+            Text(text = flower?.meaning ?: "ไม่มีข้อมูลความหมาย", modifier = Modifier.padding(16.dp))
 
             Button(
                 onClick = { navController.navigate("flower_color_grid/$flowerName") },

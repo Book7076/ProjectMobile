@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,69 +34,40 @@ fun CustomerFlowerColorGridScreen(navController: NavHostController, viewModel: P
                 title = { Text("แคตตาล็อกดอกไม้", color = Color.White) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.Default.ArrowBack, "Back", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = mainColor)
             )
         }
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .fillMaxSize()
-        ) {
+        Column(modifier = Modifier.padding(padding).fillMaxSize()) {
             Spacer(modifier = Modifier.height(16.dp))
+            Text(text = "ดอก$flowerName", fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.CenterHorizontally))
 
-            Text(
-                text = "ดอก$flowerName",
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-                color = Color(0xFF5D4037)
-            )
-
-            // ✅ แก้ไขส่วน LazyVerticalGrid
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // ✅ ต้องครอบด้วย items(flowerColors) เพื่อให้รู้จักตัวแปร item
                 items(flowerColors) { item ->
                     Card(
-                        onClick = {
-                            // ไปหน้าสุดท้าย โดยส่ง id_flower ไป
-                            navController.navigate("flower_final/${item.id_flower}")
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        shape = RoundedCornerShape(12.dp),
+                        onClick = { navController.navigate("flower_final/${item.id_flower}") },
+                        modifier = Modifier.fillMaxWidth().height(200.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(2.dp)
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.padding(8.dp)
-                        ) {
-                            Image(
-                                painter = rememberAsyncImagePainter(item.flower_image),
+                        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(8.dp)) {
+                            // ✅ ดึงรูปสีต่างๆ จาก Server
+                            AsyncImage(
+                                model = "http://10.0.2.2:3000${item.flower_image}",
                                 contentDescription = null,
-                                modifier = Modifier
-                                    .size(120.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
+                                modifier = Modifier.size(120.dp).clip(RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )
                             Spacer(modifier = Modifier.height(12.dp))
-                            Text(
-                                text = "ดอก${item.flower_name} ${item.color}",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 14.sp,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                            )
+                            Text(text = "สี${item.color}", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
